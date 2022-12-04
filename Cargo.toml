@@ -8,14 +8,14 @@ license = "Unlicense"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fontdue = "*"
-image = "*"
-palette = "*"
-anyhow = "*"
-itertools = "*"
-rand = "*"
-lazy_static = "*"
-log = "*"
+fontdue = "0.7"
+image = "0.24"
+palette = "0.6"
+anyhow = "1.0"
+itertools = "0.10"
+rand = "0.8"
+lazy_static = "1.4"
+log = "0.4"
 
 [dev-dependencies]
-regex = "*"
+regex = "1.7"
