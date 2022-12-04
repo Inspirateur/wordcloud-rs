@@ -42,7 +42,7 @@ impl Builder {
         Self {
             dim: (800, 400),
             font, 
-            colors: ColorScheme::Rainbow {luminance: 100., chroma: 128.}.into()
+            colors: ColorScheme::Rainbow {luminance: 90., chroma: 128.}.into()
         }
     }
 

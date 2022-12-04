@@ -1,9 +1,9 @@
 # wordcloud-rs
-Rust library to generate word cloud images from text and images !
+A Rust library to generate word-clouds from text and images!
 
 ## Example 
 ### Code
-```rs
+```rust
 use std::collections::HashMap;
 use std::fs;
 use lazy_static::lazy_static;
