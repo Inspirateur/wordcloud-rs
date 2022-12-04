@@ -36,4 +36,4 @@ fn main() {
 }
 ```
 ### Output
-![word_cloud_demo](https://github.com/Inspirateur/wordcloud-rs/blob/main/sample_cloud.png)
+![word_cloud_demo](https://github.com/Inspirateur/wordcloud-rs/raw/main/sample_cloud.png)
