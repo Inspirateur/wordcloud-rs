@@ -27,8 +27,12 @@ impl Display for Image {
 impl Rasterisable for Image {
     fn to_bitmap(&self) -> HXBitmap {
         let mut bitmap = HXBitmap::new(self.image.width() as usize, self.image.height() as usize);
-        let alphas = self.image.as_bytes().iter().skip(3).step_by(4).cloned().collect_vec();
-        bitmap.add_bitmap(self.image.width() as usize, &alphas, 0, 0);
+        let values = if self.image.color().has_alpha() {
+            self.image.as_bytes().iter().skip(3).step_by(4).cloned().collect_vec()
+        } else {
+            vec![255; (self.image.width()*self.image.height()) as usize]
+        };
+        bitmap.add_bitmap(self.image.width() as usize, &values, 0, 0);
         bitmap
     }
 

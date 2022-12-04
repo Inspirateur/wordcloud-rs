@@ -1,5 +1,5 @@
 use fontdue::{Font, layout::{Layout, CoordinateSystem, TextStyle}, Metrics};
-use image::{RgbaImage, GenericImage, Rgba};
+use image::{RgbaImage, GenericImage, Rgba, Pixel, GenericImageView};
 use itertools::enumerate;
 use super::{hxbitmap::{HXBitmap}, rasterisable::Rasterisable, indexed_chars::IndexedChars};
 use std::{iter::zip, fmt::Display};
@@ -55,11 +55,13 @@ impl Rasterisable for Text {
             let y = pos.1 as u32 + dpos.y as u32;
             let mut subimg = image.sub_image(x, y, metrics.width as u32, metrics.height as u32);
             for (i, value) in enumerate(char_bitmap) {
-                let dx = i % metrics.width;
-                let dy = i / metrics.width;
+                let dx = (i % metrics.width) as u32;
+                let dy = (i / metrics.width) as u32;
                 let mut color = self.color.clone();
                 color.0[3] = (color.0[3] as f32*(*value as f32)/255.) as u8;
-                subimg.put_pixel(dx as u32, dy as u32, color);
+                let mut pixel = subimg.get_pixel(dx, dy);
+                pixel.blend(&color);
+                subimg.put_pixel(dx, dy, pixel);
             }
         }
     }

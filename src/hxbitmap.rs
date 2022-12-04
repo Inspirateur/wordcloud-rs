@@ -108,10 +108,11 @@ impl HXBitmap {
                 "Bitmap: Can't fit {:?} into {:?}", (other.width, other.height), (self.width, self.height)
             ));
         }
-        let others = other.h_offsets();
+        let mut others: Vec<_> = enumerate(other.h_offsets()).collect();
+        others.shuffle(&mut thread_rng());
         while let Some((vec_x, y)) = self.poses.next() {
             if y+other.height < self.height {
-                for (dx, other) in enumerate(&others) {
+                for (dx, other) in &others {
                     if vec_x*usize::BITS as usize+dx+other.width >= self.width {
                         break;
                     }

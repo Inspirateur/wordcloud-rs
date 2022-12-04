@@ -6,8 +6,8 @@ use super::{colors::{Colors, ColorScheme, ColorGen}, Token, wordcloud::WorldClou
 
 fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     let sum = tokens.iter().fold(0., |i, (_, s)| i+s);
-    // magical formula that seem to work well ¯\_(ツ)_/¯
-    (tokens.len() as f32).log(10.)*dim.0 as f32/sum
+    // magical formula that seems to work well ¯\_(ツ)_/¯
+    1.3*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
 }
 
 fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Colors) -> RgbaImage {

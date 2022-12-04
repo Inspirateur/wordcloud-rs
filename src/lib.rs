@@ -18,11 +18,17 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use super::*;
+    use lazy_static::lazy_static;
+    use regex::Regex;
+
+    lazy_static! {
+        static ref RE_TOKEN: Regex = Regex::new(r"\w+").unwrap();
+    }
 
     fn tokenize(text: String) -> Vec<(Token, f32)> {
         let mut counts: HashMap<String, usize> = HashMap::new();
-        for token in text.replace(&['.', ',', '"', '\''], "").split_whitespace() {
-            *counts.entry(token.to_string()).or_default() += 1;
+        for token in RE_TOKEN.find_iter(&text) {
+            *counts.entry(token.as_str().to_string()).or_default() += 1;
         }
         counts.into_iter().map(|(k, v)| (Token::Text(k), v as f32)).collect()
     }
@@ -30,7 +36,11 @@ mod tests {
     #[test]
     fn it_works() {
         let text = fs::read_to_string("assets/sample_text.txt").unwrap();
-        let wc = WordCloud::new().generate(tokenize(text));
+        let mut tokens = tokenize(text);
+        tokens.push((Token::Img("assets/alan_turing.jpg".to_string()), 60.));
+        tokens.push((Token::Img("assets/turing_statue_bletchley.jpg".to_string()), 80.));
+        tokens.push((Token::Img("assets/computer_emoji.png".to_string()), 40.));
+        let wc = WordCloud::new().generate(tokens);
         wc.save("sample_cloud.png").unwrap();
     }
 }
