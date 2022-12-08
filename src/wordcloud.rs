@@ -20,6 +20,9 @@ impl WorldCloud {
 
     pub fn add(&mut self, token: Box<dyn Rasterisable>) -> bool {
         let bitmap = token.to_bitmap();
+        if bitmap.width*bitmap.height == 0 {
+            return false;
+        }
         match self.bitmap.place(bitmap) {
             Ok(pos) => {
                 token.draw(&mut self.image, pos);
