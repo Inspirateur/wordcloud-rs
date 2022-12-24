@@ -4,6 +4,7 @@ mod hxbitmap;
 mod util;
 mod colors;
 mod indexed_chars;
+mod collision_map;
 mod text;
 mod image;
 mod rasterisable;

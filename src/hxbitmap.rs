@@ -1,9 +1,6 @@
 use std::{ops::{Shl, Shr}, fmt::Display, vec};
-use anyhow::{Result, anyhow};
-use itertools::{iproduct, enumerate};
-use super::{util::{bits, next_multiple}, ring_reader::RingReader};
-use rand::thread_rng;
-use rand::seq::SliceRandom;
+use itertools::{enumerate};
+use super::util::{bits, next_multiple};
 pub const CHARS: [&str; 2] = [" ", "█"];
 // Horizontally Accelerated Bitmap
 #[derive(Clone)]
@@ -15,21 +12,19 @@ pub struct HXBitmap {
     // allocated width
     _w: usize,
     // _w/usize::BITS
-    vec_w: usize,
+    pub(crate) vec_w: usize,
     data: Vec<usize>,
-    // efficiently spreads content around
-    poses: RingReader<(usize, usize)>
 }
 
 impl HXBitmap {
+    // TODO: add a function that "blurs" the bitmap so that they are not placed right next to each other in the collision map
+    // to "blur" horizontally: x | x << 1 | x >> 1 
+    // to "blur" vertically just duplicate the first and last line
     pub fn new(width: usize, height: usize) -> Self {
         let _w = next_multiple(width, usize::BITS as usize);
         let vec_w = _w/usize::BITS as usize;
-        let mut poses = Vec::from_iter(iproduct!(0..vec_w, 0..(height-3.min(height))));
-        poses.shuffle(&mut thread_rng());
         Self {
             width, height, _w, vec_w, data: vec![0; vec_w*height],
-            poses: RingReader::new(poses)
         }
     }
 
@@ -45,7 +40,7 @@ impl HXBitmap {
         enumerate(&self.data).map(|(i, v)| (v, self.idx2d(i)))
     }
 
-    fn h_offsets(&self) -> Vec<Self> {
+    pub(crate) fn h_offsets(&self) -> Vec<Self> {
         // only do the offsets if it's 1 usize long cause it's hellish otherwise
         if self.vec_w > 1 {
             vec![self.clone()]
@@ -55,7 +50,7 @@ impl HXBitmap {
         }
     }
 
-    fn overlaps(&self, other: &Self, vec_x: usize, y: usize) -> bool {
+    pub fn overlaps(&self, other: &Self, vec_x: usize, y: usize) -> bool {
         for (v, (dx, dy)) in other.iter2d() {
             let i = self.idx1d(vec_x+dx, y+dy);
             if self.data[i] & v != 0 {
@@ -101,31 +96,6 @@ impl HXBitmap {
             }
         }
     }
-
-    pub fn place(&mut self, other: Self) -> Result<(usize, usize)> {
-        if other.width > self.width || other.height > self.height {
-            return Err(anyhow!(
-                "Bitmap: Can't fit {:?} into {:?}", (other.width, other.height), (self.width, self.height)
-            ));
-        }
-        let mut others: Vec<_> = enumerate(other.h_offsets()).collect();
-        others.shuffle(&mut thread_rng());
-        while let Some((vec_x, y)) = self.poses.next() {
-            if y+other.height < self.height {
-                for (dx, other) in &others {
-                    if vec_x*usize::BITS as usize+dx+other.width >= self.width {
-                        break;
-                    }
-                    if !self.overlaps(other, vec_x, y) {
-                        self.add(other, vec_x, y);
-                        self.poses.reset();
-                        return Ok((vec_x*usize::BITS as usize + dx, y));
-                    }
-                }
-            }
-        }
-        return Err(anyhow!("Bitmap: Not enough room left to fit the object"));
-    }
 }
 
 impl Shl<u32> for HXBitmap {
@@ -139,7 +109,6 @@ impl Shl<u32> for HXBitmap {
             _w: self._w,
             vec_w: self.vec_w,
             data: self.data.into_iter().map(|v| v << rhs).collect(),
-            poses: self.poses.clone()
         }
     }
 }
@@ -155,7 +124,6 @@ impl Shr<u32> for HXBitmap {
             _w: self._w,
             vec_w: self.vec_w,
             data: self.data.into_iter().map(|v| v >> rhs).collect(),
-            poses: self.poses.clone()
         }
     }
 }
