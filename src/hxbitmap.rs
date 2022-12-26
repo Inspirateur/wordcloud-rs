@@ -17,15 +17,27 @@ pub struct HXBitmap {
 }
 
 impl HXBitmap {
-    // TODO: add a function that "blurs" the bitmap so that they are not placed right next to each other in the collision map
-    // to "blur" horizontally: x | x << 1 | x >> 1 
-    // to "blur" vertically just duplicate the first and last line
     pub fn new(width: usize, height: usize) -> Self {
         let _w = next_multiple(width, usize::BITS as usize);
         let vec_w = _w/usize::BITS as usize;
         Self {
             width, height, _w, vec_w, data: vec![0; vec_w*height],
         }
+    }
+
+    pub(crate) fn blur(&mut self) {
+        // used to extend the "hitbox" of bitmaps a bit so that they are 
+        // not right next to each other in the collision map
+        // horizontal "blur"
+        self.data.iter_mut().for_each(|v| *v |= *v << 1 | *v >> 1);
+        // vertical "blur"
+        self.height += 2;
+        let w = self.vec_w;
+        let mut new_data = vec![0; w*self.height];
+        new_data[..w].copy_from_slice(&self.data[..w]);
+        new_data[w..(self.data.len()+w)].copy_from_slice(&self.data);
+        new_data[(self.data.len()+w)..].copy_from_slice(&self.data[(self.data.len()-w)..]);
+        self.data = new_data;
     }
 
     fn idx2d(&self, i: usize) -> (usize, usize) {

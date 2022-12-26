@@ -7,9 +7,6 @@ license = "Unlicense"
 repository = "https://github.com/Inspirateur/wordcloud-rs"
 keywords = ["wordcloud", "word", "visualisation", "image", "text"]
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 fontdue = "0.7"
 image = "0.24"
