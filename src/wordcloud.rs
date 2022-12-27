@@ -1,9 +1,25 @@
+use std::fmt::Display;
+use std::path::Path;
 use super::{rasterisable::Rasterisable, collision_map::CollisionMap};
 use image::RgbaImage;
 use log::{info, warn};
+
+#[derive(Clone)]
 pub enum Token {
     Text(String),
     Img(String)
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Text(text) => write!(f, "{}", text),
+            Token::Img(path) => write!(
+                f, "{:?}", Path::new(path).file_name().unwrap()
+            ),
+        }
+        
+    }
 }
 
 pub struct WorldCloud {
@@ -21,6 +37,7 @@ impl WorldCloud {
     pub fn add(&mut self, token: Box<dyn Rasterisable>) -> bool {
         let mut bitmap = token.to_bitmap();
         if bitmap.width*bitmap.height == 0 {
+            warn!(target: "Word Cloud", "Token bitmap has area of 0");
             return false;
         }
         bitmap.blur();

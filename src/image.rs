@@ -11,7 +11,7 @@ pub struct Image {
 
 impl Image {
     pub fn new(path: String, size: f32) -> Self {
-        let image = open(&path).unwrap();
+        let image = open(&path).expect(&format!("Couldn't open image `{}`", path));
         let ratio = image.height() as f32/image.width() as f32;
         let image = image.resize(size as u32, (size*ratio) as u32, FilterType::Nearest);
         Self {path, image}

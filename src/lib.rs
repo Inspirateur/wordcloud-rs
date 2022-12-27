@@ -21,6 +21,7 @@ mod tests {
     use super::*;
     use lazy_static::lazy_static;
     use regex::Regex;
+    use env_logger;
 
     lazy_static! {
         static ref RE_TOKEN: Regex = Regex::new(r"\w+").unwrap();
@@ -36,6 +37,9 @@ mod tests {
 
     #[test]
     fn it_works() {
+        env_logger::builder()
+            .filter_module("Word Cloud", log::LevelFilter::Info)
+            .init();
         let text = fs::read_to_string("assets/sample_text.txt").unwrap();
         let mut tokens = tokenize(text);
         tokens.push((Token::Img("assets/alan_turing.jpg".to_string()), 60.));

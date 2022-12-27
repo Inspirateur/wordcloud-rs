@@ -46,6 +46,7 @@ impl CollisionMap {
                 }
             }
         }
+        self.poses.reset();
         return Err(anyhow!("Not enough room left to fit the object"));
     }
 }

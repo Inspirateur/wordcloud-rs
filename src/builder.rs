@@ -1,13 +1,14 @@
-use std::fs;
+use std::{fs};
 use fontdue::{Font, FontSettings};
 use image::RgbaImage;
-use log::error;
+use itertools::enumerate;
+use log::{error, debug, warn};
 use super::{colors::{Colors, ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, rasterisable::Rasterisable, text::Text, image::Image};
 
 fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     let sum = tokens.iter().fold(0., |i, (_, s)| i+s);
     // magical formula that seems to work well ¯\_(ツ)_/¯
-    1.35*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
+    1.5*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
 }
 
 fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Colors) -> RgbaImage {
@@ -16,14 +17,26 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
     tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());
     let c = size_factor(dim, &tokens); 
     let mut wc = WorldCloud::new(dim);
-    for (token, size) in tokens {
-        let rasterisable: Box<dyn Rasterisable> = match token {
-            Token::Text(text) => Box::new(Text::new(text, font.clone(), 4.+size*c, colors.get())),
-            Token::Img(path) => Box::new(Image::new(path, 2.+size*c))
+    // shrink tokens if they don't fit, up to a point
+    let mut adjust = 1.;
+    let len = tokens.len();
+    'outer: for (i, (token, size)) in enumerate(tokens) {
+        debug!(target: "Word Cloud", "{} {}", size, token);
+        loop {
+            let rasterisable: Box<dyn Rasterisable> = match token.clone() {
+                Token::Text(text) => Box::new(Text::new(text, font.clone(), (2.+size*c)*adjust, colors.get())),
+                Token::Img(path) => Box::new(Image::new(path, (2.+size*c)*adjust))
+            };
+            if wc.add(rasterisable) {
+                break;
+            }
+            if adjust < 0.5 {
+                warn!(target: "Word Cloud", "Could only fit {}/{} tokens", i, len);
+                break 'outer;
+            }
+            adjust -= 0.1;
+            warn!(target: "Word Cloud", "Adjusting scale to {}", adjust)
         };
-        if !wc.add(rasterisable) {
-            break;
-        }
     }
     wc.image
 }
