@@ -1,21 +1,26 @@
 use std::fmt::Display;
-use std::path::Path;
 use super::{rasterisable::Rasterisable, collision_map::CollisionMap};
-use image::RgbaImage;
+use image::{RgbaImage, DynamicImage, open};
 use log::{info, warn};
 
 #[derive(Clone)]
 pub enum Token {
     Text(String),
-    Img(String)
+    Img(DynamicImage)
+}
+
+impl Token {
+    pub fn from(path: &str) -> Self {
+        Self::Img(open(&path).expect(&format!("Couldn't open image `{}`", path)))
+    }
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::Text(text) => write!(f, "{}", text),
-            Token::Img(path) => write!(
-                f, "{:?}", Path::new(path).file_name().unwrap()
+            Token::Img(_img) => write!(
+                f, "Image"
             ),
         }
         

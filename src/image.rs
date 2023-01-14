@@ -1,26 +1,23 @@
 use std::fmt::Display;
-use image::{open, imageops::FilterType, GenericImage, RgbaImage, DynamicImage};
+use image::{imageops::FilterType, GenericImage, RgbaImage, DynamicImage};
 use itertools::Itertools;
-use std::path::Path;
 use super::{rasterisable::Rasterisable, hxbitmap::HXBitmap};
 
 pub struct Image {
-    path: String,
     image: DynamicImage
 }
 
 impl Image {
-    pub fn new(path: String, size: f32) -> Self {
-        let image = open(&path).expect(&format!("Couldn't open image `{}`", path));
+    pub fn new(image: DynamicImage, size: f32) -> Self {
         let ratio = image.height() as f32/image.width() as f32;
         let image = image.resize(size as u32, (size*ratio) as u32, FilterType::Nearest);
-        Self {path, image}
+        Self {image}
     }
 }
 
 impl Display for Image {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", Path::new(&self.path).file_name())
+        write!(f, "{}x{} image", self.image.width(), self.image.height())
     }
 }
 

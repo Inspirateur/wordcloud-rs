@@ -42,9 +42,9 @@ mod tests {
             .init();
         let text = fs::read_to_string("assets/sample_text.txt").unwrap();
         let mut tokens = tokenize(text);
-        tokens.push((Token::Img("assets/alan_turing.jpg".to_string()), 60.));
-        tokens.push((Token::Img("assets/turing_statue_bletchley.jpg".to_string()), 80.));
-        tokens.push((Token::Img("assets/computer_emoji.png".to_string()), 40.));
+        tokens.push((Token::from("assets/alan_turing.jpg"), 60.));
+        tokens.push((Token::from("assets/turing_statue_bletchley.jpg"), 80.));
+        tokens.push((Token::from("assets/computer_emoji.png"), 40.));
         let wc = WordCloud::new().generate(tokens);
         wc.save("sample_cloud.png").unwrap();
     }
