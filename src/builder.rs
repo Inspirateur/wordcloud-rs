@@ -8,7 +8,7 @@ use super::{colors::{Colors, ColorScheme, ColorGen}, Token, wordcloud::WorldClou
 fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     let sum = tokens.iter().fold(0., |i, (_, s)| i+s);
     // magical formula that seems to work well ¯\_(ツ)_/¯
-    1.5*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
+    2.*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
 }
 
 fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Colors) -> RgbaImage {
@@ -25,7 +25,7 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
         loop {
             let rasterisable: Box<dyn Rasterisable> = match token.clone() {
                 Token::Text(text) => Box::new(Text::new(text, font.clone(), (2.+size*c)*adjust, colors.get())),
-                Token::Img(image) => Box::new(Image::new(image, (2.+size*c)*adjust*1.5))
+                Token::Img(image) => Box::new(Image::new(image, (2.+size*c)*adjust*2.))
             };
             if wc.add(rasterisable) {
                 break;

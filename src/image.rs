@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use image::{imageops::FilterType, GenericImage, RgbaImage, DynamicImage};
+use image::{imageops::FilterType, RgbaImage, DynamicImage, Pixel, GenericImageView};
 use itertools::Itertools;
 use super::{rasterisable::Rasterisable, hxbitmap::HXBitmap};
 
@@ -34,9 +34,14 @@ impl Rasterisable for Image {
     }
 
     fn draw(&self, image: &mut RgbaImage, pos: (usize, usize)) {
-        let mut subimg = image.sub_image(
-            pos.0 as u32, pos.1 as u32, self.image.width(), self.image.height()
-        );
-        subimg.copy_from(&self.image, 0, 0).unwrap();
+        let px = pos.0 as u32;
+        let py = pos.1 as u32;
+        let max_x = (px+self.image.width()).min(image.width())-px;
+        let max_y = (py+self.image.height()).min(image.height())-py;
+        for x in 0..max_x {
+            for y in 0..max_y {
+                image.get_pixel_mut(x+px, y+py).blend(&self.image.get_pixel(x, y));
+            }
+        }
     }
 }
