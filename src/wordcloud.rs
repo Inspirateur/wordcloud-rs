@@ -42,18 +42,18 @@ impl WorldCloud {
     pub fn add(&mut self, token: Box<dyn Rasterisable>) -> bool {
         let mut bitmap = token.to_bitmap();
         if bitmap.width*bitmap.height == 0 {
-            warn!(target: "Word Cloud", "Token bitmap has area of 0");
+            warn!(target: "wordcloud", "Token bitmap has area of 0");
             return false;
         }
         bitmap.blur();
         match self.collision_map.place(bitmap) {
             Ok(pos) => {
                 token.draw(&mut self.image, pos);
-                info!(target: "Word Cloud", "Placed `{}` at {:?}", token, pos);
+                info!(target: "wordcloud", "Placed `{}` at {:?}", token, pos);
                 true
             },
             Err(err) => {
-                warn!(target: "Word Cloud", "{:?}", err);
+                warn!(target: "wordcloud", "{:?}", err);
                 false
             }
         }

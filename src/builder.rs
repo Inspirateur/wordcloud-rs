@@ -21,21 +21,21 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
     let mut adjust = 1.;
     let len = tokens.len();
     'outer: for (i, (token, size)) in enumerate(tokens) {
-        debug!(target: "Word Cloud", "{} {}", size, token);
+        debug!(target: "wordcloud", "{} {}", size, token);
         loop {
             let rasterisable: Box<dyn Rasterisable> = match token.clone() {
                 Token::Text(text) => Box::new(Text::new(text, font.clone(), (2.+size*c)*adjust, colors.get())),
-                Token::Img(image) => Box::new(Image::new(image, (2.+size*c)*adjust*2.))
+                Token::Img(image) => Box::new(Image::new(image, (2.+size*c)*adjust*1.5))
             };
             if wc.add(rasterisable) {
                 break;
             }
             if adjust < 0.5 {
-                warn!(target: "Word Cloud", "Could only fit {}/{} tokens", i, len);
+                warn!(target: "wordcloud", "Could only fit {}/{} tokens", i, len);
                 break 'outer;
             }
             adjust -= 0.1;
-            warn!(target: "Word Cloud", "Adjusting scale to {}", adjust)
+            warn!(target: "wordcloud", "Adjusting scale to {}", adjust)
         };
     }
     wc.image
@@ -55,7 +55,7 @@ impl Builder {
         Self {
             dim: (800, 400),
             font, 
-            colors: ColorScheme::Rainbow {luminance: 90., chroma: 128.}.into()
+            colors: ColorScheme::Rainbow {luminance: 70., chroma: 100.}.into()
         }
     }
 
