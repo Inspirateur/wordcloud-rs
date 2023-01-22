@@ -3,7 +3,7 @@ use fontdue::{Font, FontSettings};
 use image::RgbaImage;
 use itertools::enumerate;
 use log::{error, debug, warn};
-use super::{colors::{Colors, ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, rasterisable::Rasterisable, text::Text, image::Image};
+use super::{colors::{ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, rasterisable::Rasterisable, text::Text, image::Image};
 
 fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     let sum = tokens.iter().fold(0., |i, (_, s)| i+s);
@@ -11,16 +11,16 @@ fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     2.*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
 }
 
-fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Colors) -> RgbaImage {
+fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Box<dyn ColorGen>) -> RgbaImage {
     tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
     tokens.truncate(100);
     tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());
     let c = size_factor(dim, &tokens); 
     let mut wc = WorldCloud::new(dim);
     // shrink tokens if they don't fit, up to a point
-    let mut adjust = 1.;
     let len = tokens.len();
     'outer: for (i, (token, size)) in enumerate(tokens) {
+        let mut adjust = 1.;
         debug!(target: "wordcloud", "{} {}", size, token);
         loop {
             let rasterisable: Box<dyn Rasterisable> = match token.clone() {
@@ -44,7 +44,7 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
 pub struct Builder {
     dim: (usize, usize),
     font: Font,
-    colors: Colors,
+    colors: Box<dyn ColorGen>,
 }
 
 impl Builder {
@@ -75,7 +75,7 @@ impl Builder {
         self
     }
 
-    pub fn colors(mut self, colors: impl Into<Colors>) -> Self {
+    pub fn colors(mut self, colors: impl Into<Box<dyn ColorGen>>) -> Self {
         self.colors = colors.into();
         self
     }

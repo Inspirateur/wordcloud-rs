@@ -1,6 +1,6 @@
 [package]
 name = "wordcloud-rs"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 description = "A word-cloud image generation crate."
 license = "Unlicense"
@@ -15,6 +15,7 @@ anyhow = "1.0"
 itertools = "0.10"
 rand = "0.8"
 log = "0.4"
+rand_distr = "0.4"
 
 [dev-dependencies]
 regex = "1.7"
