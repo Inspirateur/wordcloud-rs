@@ -1,52 +1,66 @@
 use itertools::{iproduct, enumerate};
+use log::warn;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
-use anyhow::{Result, anyhow};
-use crate::{hxbitmap::HXBitmap, ring_reader::RingReader};
+use anyhow::{Result, anyhow, Ok};
+use crate::{hxbitmap::HXBitmap, ring_reader::RingReader, rasterisable::Rasterisable};
 
 
 pub struct CollisionMap {
-    width: usize,
-    height: usize,
     bitmap: HXBitmap,
     // efficiently spreads content around
-    poses: RingReader<(usize, usize)>
+    spots: RingReader<(usize, usize)>
 }
 
 impl CollisionMap {
     pub fn new(width: usize, height: usize) -> Self {
         let bitmap = HXBitmap::new(width, height);
-        let mut poses = Vec::from_iter(iproduct!(0..bitmap.vec_w, 0..(height-3.min(height))));
-        poses.shuffle(&mut thread_rng());
+        let mut spots = Vec::from_iter(iproduct!(
+            0..bitmap.vec_w, 
+            0..(bitmap.height-3.min(bitmap.height))
+        ));
+        spots.shuffle(&mut thread_rng());
         Self {
-            width, height, bitmap,
-            poses: RingReader::new(poses)
+            bitmap, spots: RingReader::new(spots)
         }
     }
     
-    pub fn place(&mut self, other: HXBitmap) -> Result<(usize, usize)> {
-        if other.width > self.width || other.height > self.height {
+    fn bitmap_to_place(&self, token: &Box<dyn Rasterisable>) -> Result<HXBitmap> {
+        let mut bitmap = token.to_bitmap();
+        if bitmap.width > self.bitmap.width || bitmap.height > self.bitmap.height {
             return Err(anyhow!(
-                "Can't fit {:?} into {:?}", (other.width, other.height), (self.width, self.height)
+                "Can't fit {:?} into {:?}", 
+                (bitmap.width, bitmap.height), 
+                (self.bitmap.width, self.bitmap.height)
             ));
         }
-        let mut others: Vec<_> = enumerate(other.h_offsets()).collect();
+        bitmap.blur();
+        Ok(bitmap)
+    }
+
+    pub fn place(&mut self, token: &Box<dyn Rasterisable>) -> Result<(usize, usize)> {
+        let bitmap = self.bitmap_to_place(token)?;
+        if bitmap.width*bitmap.height == 0 {
+            warn!(target: "wordcloud", "Token bitmap has area of 0");
+            return Ok((0, 0));
+        }
+        let mut others: Vec<_> = enumerate(bitmap.h_offsets()).collect();
         others.shuffle(&mut thread_rng());
-        while let Some((vec_x, y)) = self.poses.next() {
-            if y+other.height < self.height {
+        while let Some((vec_x, vec_y)) = self.spots.next() {
+            if vec_y+bitmap.height < self.bitmap.height {
                 for (dx, other) in &others {
-                    if vec_x*usize::BITS as usize+dx+other.width >= self.width {
+                    if vec_x*usize::BITS as usize+dx+bitmap.width >= self.bitmap.width {
                         break;
                     }
-                    if !self.bitmap.overlaps(other, vec_x, y) {
-                        self.bitmap.add(other, vec_x, y);
-                        self.poses.reset();
-                        return Ok((vec_x*usize::BITS as usize + dx, y));
+                    if !self.bitmap.overlaps(other, vec_x, vec_y) {
+                        self.bitmap.add(other, vec_x, vec_y);
+                        self.spots.reset();
+                        return Ok((vec_x*usize::BITS as usize + dx, vec_y));
                     }
                 }
             }
         }
-        self.poses.reset();
-        return Err(anyhow!("Not enough room left to fit the object"));
+        self.spots.reset();
+        Err(anyhow!("Not enough room left to fit the object"))
     }
 }

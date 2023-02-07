@@ -5,15 +5,13 @@ pub const CHARS: [&str; 2] = [" ", "█"];
 // Horizontally Accelerated Bitmap
 #[derive(Clone)]
 pub struct HXBitmap {
+    data: Vec<usize>,
+    // allocated width/usize::BITS
+    pub(crate) vec_w: usize,
     // official width
     pub width: usize,
     // height
     pub height: usize,
-    // allocated width
-    _w: usize,
-    // _w/usize::BITS
-    pub(crate) vec_w: usize,
-    data: Vec<usize>,
 }
 
 impl HXBitmap {
@@ -21,8 +19,20 @@ impl HXBitmap {
         let _w = next_multiple(width, usize::BITS as usize);
         let vec_w = _w/usize::BITS as usize;
         Self {
-            width, height, _w, vec_w, data: vec![0; vec_w*height],
+            data: vec![0; vec_w*height], vec_w, width, height, 
         }
+    }
+
+    fn idx2d(&self, i: usize) -> (usize, usize) {
+        (i.rem_euclid(self.vec_w), i/self.vec_w)
+    }
+
+    fn idx1d(&self, vec_x: usize, y: usize) -> usize {
+        vec_x+y*self.vec_w
+    }
+
+    fn iter2d(&self) -> impl Iterator<Item=(&usize, (usize, usize))> {
+        enumerate(&self.data).map(|(i, v)| (v, self.idx2d(i)))
     }
 
     pub(crate) fn blur(&mut self) {
@@ -40,29 +50,22 @@ impl HXBitmap {
         self.data = new_data;
     }
 
-    fn idx2d(&self, i: usize) -> (usize, usize) {
-        (i.rem_euclid(self.vec_w), i/self.vec_w)
-    }
-
-    fn idx1d(&self, vec_x: usize, y: usize) -> usize {
-        vec_x+y*self.vec_w
-    }
-
-    fn iter2d(&self) -> impl Iterator<Item=(&usize, (usize, usize))> {
-        enumerate(&self.data).map(|(i, v)| (v, self.idx2d(i)))
-    }
-
     pub(crate) fn h_offsets(&self) -> Vec<Self> {
         // only do the offsets if it's 1 usize long cause it's hellish otherwise
         if self.vec_w > 1 {
             vec![self.clone()]
         } else {
             let max = *self.data.iter().max().unwrap();
-            (0..max.leading_zeros()).into_iter().map(|hshift| self.clone() << hshift).collect()
+            (0..=max.leading_zeros()).into_iter().map(|hshift| self.clone() << hshift).collect()
         }
     }
 
-    pub fn overlaps(&self, other: &Self, vec_x: usize, y: usize) -> bool {
+    fn set(&mut self, value: usize, vec_x: usize, y: usize) {
+        let i = self.idx1d(vec_x, y);
+        self.data[i] |= value;
+    }
+
+    pub(crate) fn overlaps(&self, other: &Self, vec_x: usize, y: usize) -> bool {
         for (v, (dx, dy)) in other.iter2d() {
             let i = self.idx1d(vec_x+dx, y+dy);
             if self.data[i] & v != 0 {
@@ -72,12 +75,7 @@ impl HXBitmap {
         false
     }
 
-    fn set(&mut self, value: usize, vec_x: usize, y: usize) {
-        let i = self.idx1d(vec_x, y);
-        self.data[i] |= value;
-    }
-
-    pub fn add(&mut self, other: &Self, vec_x: usize, y: usize) {
+    pub(crate) fn add(&mut self, other: &Self, vec_x: usize, y: usize) {
         for (v, (dx, dy)) in other.iter2d() {
             self.set(*v, vec_x+dx, y+dy);
         }
@@ -116,11 +114,10 @@ impl Shl<u32> for HXBitmap {
     fn shl(self, rhs: u32) -> Self::Output {
         // A naive shift that only works when width = 1
         Self {
+            data: self.data.into_iter().map(|v| v << rhs).collect(),
+            vec_w: self.vec_w,
             width: self.width,
             height: self.height,
-            _w: self._w,
-            vec_w: self.vec_w,
-            data: self.data.into_iter().map(|v| v << rhs).collect(),
         }
     }
 }
@@ -131,11 +128,10 @@ impl Shr<u32> for HXBitmap {
     fn shr(self, rhs: u32) -> Self::Output {
         // A naive shift that only works when width = 1
         Self {
+            data: self.data.into_iter().map(|v| v >> rhs).collect(),
+            vec_w: self.vec_w,
             width: self.width,
             height: self.height,
-            _w: self._w,
-            vec_w: self.vec_w,
-            data: self.data.into_iter().map(|v| v >> rhs).collect(),
         }
     }
 }

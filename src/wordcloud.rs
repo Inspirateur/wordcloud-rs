@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::Path};
 use super::{rasterisable::Rasterisable, collision_map::CollisionMap};
 use image::{RgbaImage, DynamicImage, open};
 use log::{info, warn};
@@ -10,8 +10,9 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn from(path: &str) -> Self {
-        Self::Img(open(&path).expect(&format!("Couldn't open image `{}`", path)))
+    pub fn from<P>(path: P) -> Self
+    where P: AsRef<Path> {
+        Self::Img(open(&path).unwrap())
     }
 }
 
@@ -23,7 +24,6 @@ impl Display for Token {
                 f, "Image"
             ),
         }
-        
     }
 }
 
@@ -40,13 +40,7 @@ impl WorldCloud {
     }
 
     pub fn add(&mut self, token: Box<dyn Rasterisable>) -> bool {
-        let mut bitmap = token.to_bitmap();
-        if bitmap.width*bitmap.height == 0 {
-            warn!(target: "wordcloud", "Token bitmap has area of 0");
-            return false;
-        }
-        bitmap.blur();
-        match self.collision_map.place(bitmap) {
+        match self.collision_map.place(&token) {
             Ok(pos) => {
                 token.draw(&mut self.image, pos);
                 info!(target: "wordcloud", "Placed `{}` at {:?}", token, pos);

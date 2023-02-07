@@ -1,9 +1,24 @@
-use std::{fs};
+use std::fs;
 use fontdue::{Font, FontSettings};
 use image::RgbaImage;
 use itertools::enumerate;
 use log::{error, debug, warn};
-use super::{colors::{ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, rasterisable::Rasterisable, text::Text, image::Image};
+use super::{
+    colors::{ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, 
+    rasterisable::Rasterisable, text::Text, image::Image
+};
+use twemoji_rs::get_twemoji;
+
+fn convert_emojis(tokens: &mut Vec<(Token, f32)>) {
+    // Convert unicode emojis to images with Twemoji
+    tokens.iter_mut().for_each(|(token, _v)| {
+        if let Token::Text(str) = token {
+            if let Some(path) = get_twemoji(str) {
+                *token = Token::from(&path);
+            }
+        }
+    });
+}
 
 fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     let sum = tokens.iter().fold(0., |i, (_, s)| i+s);
@@ -15,6 +30,7 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
     tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
     tokens.truncate(100);
     tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());
+    convert_emojis(&mut tokens);
     let c = size_factor(dim, &tokens); 
     let mut wc = WorldCloud::new(dim);
     // shrink tokens if they don't fit, up to a point
