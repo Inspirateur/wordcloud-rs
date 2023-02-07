@@ -28,7 +28,7 @@ fn main() {
     let mut tokens = tokenize(text);
     tokens.push((Token::from("assets/alan_turing.jpg"), 15.));
     tokens.push((Token::from("assets/turing_statue_bletchley.jpg"), 20.));
-    tokens.push((Token::from("assets/computer_emoji.png"), 10.));
+    tokens.push((Token::Text("💻".to_string()), 20.));
     // Generate the word-cloud
     let wc = WordCloud::new().generate(tokens);
     // Save it
