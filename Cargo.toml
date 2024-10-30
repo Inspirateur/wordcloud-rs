@@ -1,6 +1,6 @@
 [package]
 name = "wordcloud-rs"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 description = "A word-cloud image generation crate."
 license = "Unlicense"
@@ -8,17 +8,17 @@ repository = "https://github.com/Inspirateur/wordcloud-rs"
 keywords = ["wordcloud", "word", "visualisation", "image", "text"]
 
 [dependencies]
-fontdue = "0.7"
-image = "0.24"
+fontdue = "0.9"
+image = "0.25"
 palette = "0.7"
 anyhow = "1.0"
-itertools = "0.10"
+itertools = "0.13"
 rand = "0.8"
 log = "0.4"
 rand_distr = "0.4"
 twemoji-rs = "0.1"
 
 [dev-dependencies]
-env_logger = "0.10"
-regex = "1.7"
-lazy_static = "1.4"
+env_logger = "0.11"
+regex = "1.11"
+lazy_static = "1.5"
