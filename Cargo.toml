@@ -7,16 +7,21 @@ license = "Unlicense"
 repository = "https://github.com/Inspirateur/wordcloud-rs"
 keywords = ["wordcloud", "word", "visualisation", "image", "text"]
 
+[features]
+default = ["fs"]
+fs = []
+
 [dependencies]
 fontdue = "0.9"
 image = "0.25"
 palette = "0.7"
 anyhow = "1.0"
-itertools = "0.13"
+itertools = "0.14"
 rand = "0.8"
 log = "0.4"
 rand_distr = "0.4"
 twemoji-rs = "0.1"
+binary_raster = "0.1"
 
 [dev-dependencies]
 env_logger = "0.11"

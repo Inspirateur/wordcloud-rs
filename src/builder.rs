@@ -1,4 +1,5 @@
 use std::fs;
+
 use fontdue::{Font, FontSettings};
 use image::RgbaImage;
 use itertools::enumerate;
@@ -30,6 +31,7 @@ fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, co
     tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
     tokens.truncate(100);
     tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());
+    #[cfg(feature = "fs")]
     convert_emojis(&mut tokens);
     let c = size_factor(dim, &tokens); 
     let mut wc = WorldCloud::new(dim);
@@ -69,7 +71,7 @@ impl Builder {
         // Parse it into the font type.
         let font = Font::from_bytes(font, FontSettings::default()).unwrap();
         Self {
-            dim: (800, 400),
+            dim: (896, 448),
             font, 
             colors: ColorScheme::Rainbow {luminance: 70., chroma: 100.}.into()
         }
@@ -86,6 +88,7 @@ impl Builder {
         self
     }
 
+    /// witdh and height both need to be multiples of usize::BITS (64 on most machine) !
     pub fn dim(mut self, width: usize, height: usize) -> Self {
         self.dim = (width, height);
         self

@@ -1,7 +1,8 @@
 use std::fmt::Display;
 use image::{imageops::FilterType, RgbaImage, DynamicImage, Pixel, GenericImageView};
 use itertools::Itertools;
-use super::{rasterisable::Rasterisable, hxbitmap::HXBitmap};
+use super::rasterisable::Rasterisable;
+use binary_raster::BinaryRaster;
 
 pub struct Image {
     image: DynamicImage
@@ -22,15 +23,13 @@ impl Display for Image {
 }
 
 impl Rasterisable for Image {
-    fn to_bitmap(&self) -> HXBitmap {
-        let mut bitmap = HXBitmap::new(self.image.width() as usize, self.image.height() as usize);
+    fn to_bitmap(&self) -> BinaryRaster {
         let values = if self.image.color().has_alpha() {
             self.image.as_bytes().iter().skip(3).step_by(4).cloned().collect_vec()
         } else {
             vec![255; (self.image.width()*self.image.height()) as usize]
         };
-        bitmap.add_bitmap(self.image.width() as usize, &values, 0, 0);
-        bitmap
+        BinaryRaster::from_raster(&values, self.image.width() as usize)
     }
 
     fn draw(&self, image: &mut RgbaImage, pos: (usize, usize)) {
