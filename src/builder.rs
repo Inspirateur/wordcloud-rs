@@ -2,7 +2,6 @@ use std::fs;
 
 use fontdue::{Font, FontSettings};
 use image::RgbaImage;
-use itertools::enumerate;
 use log::{error, debug, warn};
 use super::{
     colors::{ColorScheme, ColorGen}, Token, wordcloud::WorldCloud, 
@@ -27,36 +26,37 @@ fn size_factor(dim: (usize, usize), tokens: &Vec<(Token, f32)>) -> f32 {
     2.*(tokens.len() as f32).log(10.)*dim.0 as f32/sum
 }
 
+fn _wordcloud(font: &Font, dim: (usize, usize), tokens: &Vec<(Token, f32)>, colors: &mut Box<dyn ColorGen>, size_factor: f32) -> Result<RgbaImage, RgbaImage> {
+    let mut wc = WorldCloud::new(dim);
+    for (token, size) in tokens {
+        debug!(target: "wordcloud", "{} {}", size, token);
+        let rasterisable: Box<dyn Rasterisable> = match token.clone() {
+            Token::Text(text) => Box::new(Text::new(text, font.clone(), 2.+size*size_factor, colors.get())),
+            Token::Img(image) => Box::new(Image::new(image, (2.+size*size_factor)*1.5))
+        };
+        if !wc.add(rasterisable) {
+            return Err(wc.image);
+        }
+    }
+    Ok(wc.image)
+}
+
 fn wordcloud(font: &Font, dim: (usize, usize), mut tokens: Vec<(Token, f32)>, colors: &mut Box<dyn ColorGen>) -> RgbaImage {
-    tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
-    tokens.truncate(100);
-    tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());
     #[cfg(feature = "fs")]
     convert_emojis(&mut tokens);
-    let c = size_factor(dim, &tokens); 
-    let mut wc = WorldCloud::new(dim);
-    // shrink tokens if they don't fit, up to a point
-    let len = tokens.len();
-    'outer: for (i, (token, size)) in enumerate(tokens) {
-        let mut adjust = 1.;
-        debug!(target: "wordcloud", "{} {}", size, token);
-        loop {
-            let rasterisable: Box<dyn Rasterisable> = match token.clone() {
-                Token::Text(text) => Box::new(Text::new(text, font.clone(), (2.+size*c)*adjust, colors.get())),
-                Token::Img(image) => Box::new(Image::new(image, (2.+size*c)*adjust*1.5))
-            };
-            if wc.add(rasterisable) {
-                break;
-            }
-            if adjust < 0.5 {
-                warn!(target: "wordcloud", "Could only fit {}/{} tokens", i, len);
-                break 'outer;
-            }
-            adjust -= 0.1;
-            warn!(target: "wordcloud", "Adjusting scale to {}", adjust)
-        };
+    let mut size_factor = size_factor(dim, &tokens); 
+    let mut img_res = _wordcloud(font, dim, &tokens, colors, size_factor);
+    debug!(target: "wordcloud", "Attempting to create {}x{} wordcloud with size factor of {}", dim.0, dim.1, size_factor);
+    while img_res.is_err() && size_factor > 0.1 {
+        size_factor *= 0.9;
+        warn!(target: "wordcloud", "Couldn't fit every token, retrying with size factor of {}", size_factor);
+        img_res = _wordcloud(font, dim, &tokens, colors, size_factor);
     }
-    wc.image
+    debug!(target: "wordcloud", "Wordcloud complete");
+    match img_res {
+        Ok(img) => img,
+        Err(img) => img
+    }
 }
 
 pub struct Builder {

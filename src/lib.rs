@@ -43,6 +43,12 @@ mod tests {
         tokens.push((Token::from("assets/alan_turing.jpg"), 15.));
         tokens.push((Token::from("assets/turing_statue_bletchley.jpg"), 20.));
         tokens.push((Token::Text("💻".to_string()), 20.));
+        // sort the token by importance
+        tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
+        // only keep the top 100
+        tokens.truncate(100);
+        // "squish" importance values
+        tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());    
         let wc = WordCloud::new().generate(tokens);
         wc.save("sample_cloud.png").unwrap();
     }
@@ -56,6 +62,12 @@ mod tests {
         """#.to_string();
         let mut tokens = tokenize(text);
         tokens.push((Token::Text("💻".to_string()), 5.));
+        // sort the token by importance
+        tokens.sort_by(|(_, s1), (_, s2)| s2.partial_cmp(s1).unwrap());
+        // only keep the top 100
+        tokens.truncate(100);
+        // "squish" importance values
+        tokens.iter_mut().for_each(|(_, v)| *v = v.sqrt());            
         let wc = WordCloud::new().generate(tokens);
         wc.save("sample_cloud_no_fs.png").unwrap();
     }
