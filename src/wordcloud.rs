@@ -52,4 +52,8 @@ impl WorldCloud {
             }
         }
     }
+
+    pub fn display_collison_map(&self) {
+        println!("{}", self.collision_map.get_display(2));
+    }
 }

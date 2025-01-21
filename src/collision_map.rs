@@ -38,4 +38,8 @@ impl CollisionMap {
         self.spots.reset();
         Err(anyhow!("Not enough room left to fit the object"))
     }
+
+    pub fn get_display(&self, resolution: u32) -> String {
+        self.bitmap.get_display(resolution)
+    }
 }
