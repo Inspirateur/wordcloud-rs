@@ -102,4 +102,12 @@ impl Builder {
     pub fn generate(&mut self, tokens: Vec<(Token, f32)>) -> RgbaImage {
         wordcloud(&self.font, self.dim, tokens, &mut self.colors)
     }
+
+    pub fn width(&self) -> usize {
+        self.dim.0
+    }
+
+    pub fn height(&self) -> usize {
+        self.dim.1
+    }
 }

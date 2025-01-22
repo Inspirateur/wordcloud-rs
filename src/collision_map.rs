@@ -15,8 +15,8 @@ impl CollisionMap {
     pub fn new(width: usize, height: usize) -> Self {
         let bitmap = BinaryRaster::new(width, height);
         let mut spots = Vec::from_iter(iproduct!(
-            (2..(width-40)).step_by(2), 
-            (2..(height-20)).step_by(2)
+            (2..(width-40)).step_by(8), 
+            (2..(height-20)).step_by(8)
         ));
         spots.shuffle(&mut thread_rng());
         Self {
